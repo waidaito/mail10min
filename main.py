@@ -1,3 +1,4 @@
+import os
 import io
 import discord
 import aiohttp
@@ -7,7 +8,7 @@ from flask import Flask
 from threading import Thread
 from discord.ext import commands
 
-TOKEN = "DAN_TOKEN_BOT_VAO_ĐAY"
+TOKEN = os.getenv("TOKEN")
 
 app = Flask('')
 
