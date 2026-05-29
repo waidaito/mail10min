@@ -8,7 +8,6 @@ from flask import Flask
 from threading import Thread
 from discord.ext import commands
 from discord.ui import Button, View
-from googletrans import Translator
 
 TOKEN = os.getenv("TOKEN")
 
@@ -34,16 +33,6 @@ bot = commands.Bot(
     activity=discord.Activity(type=discord.ActivityType.watching, name="tao gmail 10p")
 )
 
-translator = Translator()
-
-async def dich_sang_tieng_viet(van_ban):
-    try:
-        loop = asyncio.get_event_loop()
-        ket_qua = await loop.run_in_executor(None, lambda: translator.translate(van_ban, dest='vi'))
-        return ket_qua.text
-    except:
-        return van_ban
-
 class XacNhanMailView(View):
     def __init__(self, ten_muon_dat):
         super().__init__(timeout=60)
@@ -60,7 +49,7 @@ class XacNhanMailView(View):
             await interaction.followup.send("Khong the gui DM cho ban. Vui long mo chan tin nhan tu nguoi la.", ephemeral=True)
             return
 
-        await interaction.followup.send("Da bat dau tien trinh tao mail. Vui long kiem tra  (DM) cua ban.", ephemeral=True)
+        await interaction.followup.send("Da bat dau tien trinh tao mail. Vui long kiem tra (DM) cua ban.", ephemeral=True)
         self.stop()
 
         async with aiohttp.ClientSession() as session:
@@ -112,15 +101,12 @@ class XacNhanMailView(View):
                                     tieu_de_goc = msg_data.get("mail_subject", "Khong co tieu de")
                                     noi_dung_goc = msg_data.get("mail_body", "Khong co noi dung.")
                                     noi_dung_goc = re.sub(r'<[^>]*>', '', noi_dung_goc)
+                                    noi_dung_goc = noi_dung_goc[:1000]
                                     
-                                    tieu_de_dich = await dich_sang_tieng_viet(tieu_de_goc)
-                                    noi_dung_dich = await dich_sang_tieng_viet(noi_dung_goc)
-                                    noi_dung_dich = noi_dung_dich[:1000]
-                                    
-                                    embed = discord.Embed(title="Ban co thu moi! (Da dich sang Tieng Viet)", color=discord.Color.blue())
+                                    embed = discord.Embed(title="Ban co thu moi!", color=discord.Color.blue())
                                     embed.add_field(name="Nguoi gui:", value=msg_data.get("mail_from"), inline=False)
-                                    embed.add_field(name="Tieu de:", value=tieu_de_dich, inline=False)
-                                    embed.add_field(name="Noi dung:", value=f"```\n{noi_dung_dich}\n```", inline=False)
+                                    embed.add_field(name="Tieu de:", value=tieu_de_goc, inline=False)
+                                    embed.add_field(name="Noi dung:", value=f"```\n{noi_dung_goc}\n```", inline=False)
                                     
                                     if last_embed_msg:
                                         try:
@@ -145,4 +131,4 @@ async def generate_guerrilla_mail(ctx, ten_muon_dat: str = None):
 if __name__ == "__main__":
     keep_alive()
     bot.run(TOKEN)
-    
+                                
