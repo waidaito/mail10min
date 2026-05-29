@@ -126,9 +126,17 @@ async def on_ready():
 @bot.command(name="genmail")
 async def generate_guerrilla_mail(ctx, ten_muon_dat: str = None):
     view = XacNhanMailView(ten_muon_dat)
-    await ctx.send("Bam vao nut duoi day de xac nhan tao email 10 phut :", view=view)
+    
+    # Tao bang luon o day de boc dong chu thong bao lai
+    embed = discord.Embed(
+        title="He Thong Tao Mail", 
+        description="Bam vao nut duoi day de xac nhan tao email 10 phut :", 
+        color=discord.Color.green()
+    )
+    
+    await ctx.send(embed=embed, view=view)
 
 if __name__ == "__main__":
     keep_alive()
     bot.run(TOKEN)
-                                
+                                    
