@@ -3,9 +3,24 @@ import discord
 import aiohttp
 import asyncio
 import re
+from flask import Flask
+from threading import Thread
 from discord.ext import commands
 
-TOKEN = "TOKEN"
+TOKEN = "DAN_TOKEN_BOT_VAO_ĐAY"
+
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot Mail is live"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -78,4 +93,6 @@ async def generate_guerrilla_mail(ctx, ten_muon_dat: str = None):
         await status_msg.edit(content=f"Email: `{email_address}` da het thoi gian cho ma khong co thu den.")
 
 if __name__ == "__main__":
+    keep_alive()
     bot.run(TOKEN)
+    
