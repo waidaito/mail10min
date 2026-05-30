@@ -126,17 +126,85 @@ async def on_ready():
 @bot.command(name="genmail")
 async def generate_guerrilla_mail(ctx, ten_muon_dat: str = None):
     view = XacNhanMailView(ten_muon_dat)
-    
-    # Tao bang luon o day de boc dong chu thong bao lai
     embed = discord.Embed(
-        title="He Thong Tao Mail", 
+        title="He Thong Tao Mail Tuyen Chon", 
         description="Bam vao nut duoi day de xac nhan tao email 10 phut :", 
         color=discord.Color.green()
     )
-    
     await ctx.send(embed=embed, view=view)
+
+@bot.command(name="check")
+async def check_live_gmail(ctx, *, danh_sach_email: str = None):
+    if not danh_sach_email:
+        embed_error = discord.Embed(
+            title="Thieu du lieu", 
+            description="Vui long nhap danh sach email can kiem tra.\nVi du: `.check email1@gmail.com email2@gmail.com`", 
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=embed_error)
+        return
+
+    danh_sach = [email.strip() for email in re.split(r'[\s,\n]+', danh_sach_email) if email.strip()]
+    
+    if len(danh_sach) > 1000:
+        await ctx.send("He thong chi ho tro kiem tra toi da 1000 email mot lan!")
+        return
+
+    status_msg = await ctx.send(f"Dang tien hanh kiem tra {len(danh_sach)} email...")
+
+    payload = {
+        "api_key": "737616830b02fe7e384632fb14b303f7",
+        "fastCheck": True,
+        "email": danh_sach
+    }
+
+    async with aiohttp.ClientSession() as session:
+        headers = {"Content-Type": "application/json"}
+        async with session.post("https://checkmail.live/check/", json=payload, headers=headers) as resp:
+            if resp.status != 200:
+                await status_msg.edit(content="Khong the ket noi den may chu checkmail.live.")
+                return
+            
+            ket_qua = await resp.json()
+            status_api = ket_qua.get("status") or ket_qua.get("trang thai") or ket_qua.get("trạng thái")
+            
+            if not status_api:
+                thong_bao_loi = ket_qua.get("msg") or ket_qua.get("Thong bao") or ket_qua.get("Thông báo") or "Loi khong xac dinh"
+                await status_msg.edit(content=f"That bai: {thong_bao_loi}")
+                return
+
+            data_list = ket_qua.get("data") or ket_qua.get("du lieu") or ket_qua.get("dữ liệu") or []
+            text_ket_qua = ""
+            
+            for item in data_list:
+                mail = item.get("email")
+                trang_thai = item.get("status") or item.get("trang thai") or item.get("Trạng thái") or item.get("trạng thái")
+                
+                if str(trang_thai).lower() in ["live", "truc tiep", "trực tiếp"]:
+                    icon = "🟢"
+                elif str(trang_thai).lower() in ["die", "chet", "chết"]:
+                    icon = "🔴"
+                elif "thoai" in str(trang_thai).lower() or "phone" in str(trang_thai).lower() or "thoại" in str(trang_thai).lower():
+                    icon = "🟡"
+                else:
+                    icon = "⚪"
+                    
+                text_ket_qua += f"{icon} `{mail}`: **{trang_thai}**\n"
+
+            if len(text_ket_qua) > 1900:
+                text_ket_qua = text_ket_qua[:1900] + "\n...(Con tiep)..."
+
+            embed_kq = discord.Embed(
+                title="Ket Qua Kiem Tra Gmail Hang Loat", 
+                description=text_ket_qua if text_ket_qua else "Khong nhan duoc du lieu phan tich.", 
+                color=discord.Color.blue()
+            )
+            embed_kq.set_footer(text=f"Tong so: {len(danh_sach)} email")
+            
+            await ctx.reply(embed=embed_kq)
+            await status_msg.delete()
 
 if __name__ == "__main__":
     keep_alive()
     bot.run(TOKEN)
-                                    
+            
